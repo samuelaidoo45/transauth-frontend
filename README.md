@@ -82,7 +82,7 @@ TransactShield Authentication is a secure authentication system designed to stre
 
 ## **Hosted Link**
 
-- **Frontend**: [https://your-frontend-link.com](https://your-frontend-link.com)
+- **Frontend**: [https://transauth-frontend.vercel.app/](https://transauth-frontend.vercel.app/)
 
 ---
 
