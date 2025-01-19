@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
+import { jwtDecode } from "jwt-decode";
 import api from "../../utils/api"; // Axios instance for API requests
-import { jwtDecode } from "jwt-decode"; // To decode JWT tokens
 import Cookies from "js-cookie"; // To manage cookies
 
 interface DecodedToken {
@@ -29,11 +30,12 @@ export default function Profile() {
   // Function to validate the token
   const isTokenValid = (token: string): boolean => {
     try {
-      const decoded: DecodedToken = jwtDecode(token);
+      // Decode the token and compare exp with current time
+      const decoded = jwtDecode<DecodedToken>(token);
       const currentTime = Date.now() / 1000; // in seconds
       return decoded.exp > currentTime;
-    } catch (error) {
-      console.error("Invalid token:", error);
+    } catch (decodeError) {
+      console.error("Invalid token:", decodeError);
       return false;
     }
   };
@@ -64,7 +66,10 @@ export default function Profile() {
           },
         });
         setUser(response.data);
-      } catch (err: any) {
+      } catch (err: unknown) {
+        // We can optionally check if it's an AxiosError:
+        // if (axios.isAxiosError(err)) { ... }
+
         console.error("Error fetching profile:", err);
         setError("Failed to fetch profile. Redirecting to login...");
         // Clear the token and redirect after a short delay

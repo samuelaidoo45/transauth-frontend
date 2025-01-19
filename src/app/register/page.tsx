@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import api from "../../utils/api"; // Use Axios instance
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import axios from "axios";
+import api from "../../utils/api"; // Use your Axios instance
 
 export default function Register() {
   const [username, setUsername] = useState("");
@@ -12,18 +14,18 @@ export default function Register() {
 
   const validateInputs = (): boolean => {
     setValidationError(""); // Clear validation errors before validation
-  
+
     if (username.length < 3) {
       setValidationError("Username must be at least 3 characters long.");
       return false;
     }
-  
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setValidationError("Please enter a valid email address.");
       return false;
     }
-  
+
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
     if (!passwordRegex.test(password)) {
@@ -32,10 +34,9 @@ export default function Register() {
       );
       return false;
     }
-  
+
     return true;
   };
-  
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,11 +46,17 @@ export default function Register() {
 
     try {
       await api.post("/users/register", { username, email, password });
-      window.location.href = "/login"; // Redirect to login page after successful registration
-    } catch (err: any) {
-      setError(
-        err.response?.data?.detail || "Registration failed. Please try again."
-      );
+      // Redirect to login page after successful registration
+      window.location.href = "/login";
+    } catch (err: unknown) {
+      // Use axios.isAxiosError to check if this is an Axios error
+      if (axios.isAxiosError(err)) {
+        setError(
+          err.response?.data?.detail || "Registration failed. Please try again."
+        );
+      } else {
+        setError("Registration failed. Please try again.");
+      }
     }
   };
 

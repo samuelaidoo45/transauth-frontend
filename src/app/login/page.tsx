@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import api from "../../utils/api"; // Import the Axios instance
-import { jwtDecode } from "jwt-decode"; // Corrected import
+import React, { useState, useEffect } from "react";
+import axios, { AxiosError } from "axios";
+import { jwtDecode } from "jwt-decode"; // typical usage
+import api from "../../utils/api";  // Your custom Axios instance
 
+// Extend if you want more fields from the token
 interface DecodedToken {
-  exp: number;
+  exp: number; // token expiration time
 }
 
 export default function Login() {
@@ -47,9 +49,9 @@ export default function Login() {
     setIsSubmitting(true);
 
     try {
-      // Use the Axios instance for API call
+      // Use the custom Axios instance for API call
       const response = await api.post("/users/login", {
-        "username": "string",
+        username: "string", // Hardcoded or remove if not required
         email,
         password,
       });
@@ -58,29 +60,42 @@ export default function Login() {
 
       // Decode token to get expiration
       const decoded: DecodedToken = jwtDecode(token);
-      const expires = new Date(decoded.exp * 1000); // Convert to milliseconds
+      const expires = new Date(decoded.exp * 1000); // Convert exp to milliseconds
 
       // Store the token securely in a cookie
       document.cookie = `token=${token}; path=/; expires=${expires.toUTCString()}; SameSite=Strict; Secure`;
 
       // Redirect to the profile page
       window.location.href = "/profile";
-    } catch (err: any) {
-      if (err.response?.data?.detail) {
-        if (Array.isArray(err.response.data.detail)) {
-          // If 'detail' is an array, concatenate all messages
-          const messages = err.response.data.detail.map((d: any) => d.msg).join(" ");
-          setError(messages);
-        } else if (typeof err.response.data.detail === "object") {
-          // If 'detail' is an object, extract the 'msg' property
-          setError(err.response.data.detail.msg || "An error occurred.");
-        } else if (typeof err.response.data.detail === "string") {
-          // If 'detail' is already a string
-          setError(err.response.data.detail);
+    } catch (err: unknown) {
+      /*
+        Cast to AxiosError so we can safely access err.response?.data
+        (You might need import type { AxiosError } from 'axios' at the top)
+      */
+      if (axios.isAxiosError(err)) {
+        const detail = err.response?.data?.detail;
+        if (detail) {
+          if (Array.isArray(detail)) {
+            // If 'detail' is an array, concatenate all messages
+            const messages = detail
+              .map((d: { msg: string }) => d.msg)
+              .join(" ");
+            setError(messages);
+          } else if (typeof detail === "object") {
+            // If 'detail' is an object, extract the 'msg' property
+            const possibleMsg = (detail as { msg?: string }).msg;
+            setError(possibleMsg || "An error occurred.");
+          } else if (typeof detail === "string") {
+            // If 'detail' is already a string
+            setError(detail);
+          } else {
+            setError("An unexpected error occurred.");
+          }
         } else {
           setError("An unexpected error occurred.");
         }
       } else {
+        // Non-Axios errors
         setError("An unexpected error occurred.");
       }
     } finally {
@@ -102,19 +117,21 @@ export default function Login() {
 
         if (decoded.exp < currentTime) {
           // Token has expired
-          document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
+          document.cookie =
+            "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
           window.location.href = "/login";
         } else {
           // Set a timeout to logout when the token expires
           const timeout = (decoded.exp - currentTime) * 1000;
           const timer = setTimeout(() => {
-            document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
+            document.cookie =
+              "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
             window.location.href = "/login";
           }, timeout);
 
           return () => clearTimeout(timer);
         }
-      } catch (error) {
+      } catch {
         // If token is invalid or decoding fails
         document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT;";
         window.location.href = "/login";
