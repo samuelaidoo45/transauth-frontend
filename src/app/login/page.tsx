@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import axios, { AxiosError } from "axios";
-import { jwtDecode } from "jwt-decode"; // typical usage
+import { jwtDecode } from "jwt-decode"; 
 import api from "../../utils/api";  // Your custom Axios instance
 
 // Extend if you want more fields from the token
@@ -68,10 +68,7 @@ export default function Login() {
       // Redirect to the profile page
       window.location.href = "/profile";
     } catch (err: unknown) {
-      /*
-        Cast to AxiosError so we can safely access err.response?.data
-        (You might need import type { AxiosError } from 'axios' at the top)
-      */
+      // Handle errors
       if (axios.isAxiosError(err)) {
         const detail = err.response?.data?.detail;
         if (detail) {

@@ -67,8 +67,7 @@ export default function Profile() {
         });
         setUser(response.data);
       } catch (err: unknown) {
-        // We can optionally check if it's an AxiosError:
-        // if (axios.isAxiosError(err)) { ... }
+      
 
         console.error("Error fetching profile:", err);
         setError("Failed to fetch profile. Redirecting to login...");
