@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import api from "../../utils/api"; // Axios instance for API requests
 import Cookies from "js-cookie"; // To manage cookies
